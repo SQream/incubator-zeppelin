@@ -1,0 +1,29 @@
+
+To use, add this to the interpreters section in conf/zeppelin-site.xml
+(if this file doesn't exist, copy conf/zeppelin-site.xml.template):
+
+org.apache.zeppelin.sqream.SqreamInterpreter
+
+next to the org.apache.zeppelin.postgresql.PostgreSqlInterpreter in
+the csv list in a property called zeppelin.interpreters
+
+TODO:
+
+use better names for the sqream jars
+
+try to find a way to build just the sqream plugin for zeppelin using
+ant then install into a working zeppelin instead of using the maven
+shite
+
+get the tests working, from the sqream source
+
+the error messages when e.g. you get a database name wrong in
+zeppelin front end are absolutely terrible
+
+
+the sqream jars were added using these instructions:
+https://devcenter.heroku.com/articles/local-maven-dependencies
+
+we should put sqream and the version numbers in the raw .jar file
+names for sqream, and the names 'client' and 'wrapper' are meaningless
+and should be improved.

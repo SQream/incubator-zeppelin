@@ -41,7 +41,7 @@
     <repository>
         <id>project.local</id>
         <name>project</name>
-        <url>file:${project.basedir}/repo</url>
+        <url>file:${project.basedir}/../repo</url>
     </repository>
 </repositories>
 
@@ -121,14 +121,14 @@
 
 <dependency>
     <groupId>com.sqream</groupId>
-    <artifactId>JDBCWrapper</artifactId>
-    <version>1.0</version>
+    <artifactId>SqreamClient</artifactId>
+    <version>1.92</version>
 </dependency>
 
 <dependency>
     <groupId>com.sqream</groupId>
-    <artifactId>JDBCClient</artifactId>
-    <version>1.0</version>
+    <artifactId>SqreamJDBC</artifactId>
+    <version>1.92</version>
 </dependency>
 
 

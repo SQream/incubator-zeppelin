@@ -147,6 +147,14 @@ angular.module('zeppelinWebApp')
     return 0;
   };
 
+    $scope.$on('updateQuery', function(evt, data) {
+      //TODO: apply from ui after we impl button func
+      if ($scope.paragraph.id === "20151228-190320_1286277824") {
+        $scope.paragraph.text += [' and ', data.column, ' = ', "'", data.value, "'"].join('');
+        $scope.runParagraph($scope.paragraph.text);
+      }
+    });
+
   $scope.$watch($scope.getIframeDimensions, function (newValue, oldValue) {
     if ($scope.asIframe && newValue) {
       var message = {};
@@ -897,6 +905,10 @@ angular.module('zeppelinWebApp')
     return 'data:image/png;base64,'+base64Data;
   };
 
+  $scope.isIsInjectMode = function(id) {
+    return $rootScope.injectedTableId === id;
+  }
+
   $scope.getGraphMode = function(paragraph) {
     var pdata = (paragraph) ? paragraph : $scope.paragraph;
     if (pdata.config.graph && pdata.config.graph.mode) {
@@ -954,6 +966,8 @@ angular.module('zeppelinWebApp')
     }
   };
 
+
+
   $scope.setGraphMode = function(type, emit, refresh) {
     if (emit) {
       setNewMode(type);
@@ -971,6 +985,29 @@ angular.module('zeppelinWebApp')
       }
     }
   };
+
+    function registerGraphListener(graphType) {
+      switch (graphType) {
+        case 'table':
+          $timeout(function() {
+            $('.graphContainer .table tbody tr').on('click', function(evt) {
+              if ($scope.query.isRunning) {
+                return;
+              }
+              $scope.query.isRunning = true;
+              var gbIndex = $scope.paragraph.text.indexOf('group by');
+              var gbLen = 'group by '.length;
+              var column = $scope.paragraph.text.substring(gbIndex + gbLen, $scope.paragraph.text.length);
+              var val = evt.currentTarget.children[0].innerHTML;
+              $rootScope.$broadcast('updateQuery', {
+                column: column,
+                value: val
+              });
+            })
+          },200)
+
+      }
+    }
 
   var setNewMode = function(newMode) {
     var newConfig = angular.copy($scope.paragraph.config);
@@ -1061,6 +1098,7 @@ angular.module('zeppelinWebApp')
       // set table height
       var height = $scope.paragraph.config.graph.height;
       angular.element('#p' + $scope.paragraph.id + '_table').height(height);
+      registerGraphListener('table');
     };
 
     var retryRenderer = function() {

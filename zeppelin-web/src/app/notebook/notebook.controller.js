@@ -18,6 +18,9 @@
 angular.module('zeppelinWebApp').controller('NotebookCtrl',
   function($scope, $route, $routeParams, $location, $rootScope, $http,
     websocketMsgSrv, baseUrlSrv, $timeout, SaveAsService) {
+
+  $rootScope.injectedTableId = null;
+  $scope.query = {isRunning: false};
   $scope.note = null;
   $scope.showEditor = false;
   $scope.editorToggled = false;
@@ -311,6 +314,7 @@ angular.module('zeppelinWebApp').controller('NotebookCtrl',
     } else {
       updateNote(note);
     }
+    $scope.query.isRunning = false;
     initializeLookAndFeel();
     //open interpreter binding setting when there're none selected
     getInterpreterBindings(getInterpreterBindingsCallBack);

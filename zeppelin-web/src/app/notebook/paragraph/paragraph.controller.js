@@ -986,26 +986,51 @@ angular.module('zeppelinWebApp')
     }
   };
 
-    function registerGraphListener(graphType) {
+    function registerGraphListener(graphId) {
+
+      function _runQuery(value) {
+        if ($scope.query.isRunning) {
+          return;
+        }
+        $scope.query.isRunning = true;
+        var gbIndex = $scope.paragraph.text.indexOf('group by');
+        var gbLen = 'group by '.length;
+        var column = $scope.paragraph.text.substring(gbIndex + gbLen, $scope.paragraph.text.length);
+        $rootScope.$broadcast('updateQuery', {
+          column: column,
+          value : value
+        });
+      }
+      var graphType;
+      if (graphId.indexOf('_graph') > -1) {
+       graphType = 'table';
+      }
+      else if(graphId.indexOf('_multiBarChart') > -1) {
+        graphType = 'multiBarChart';
+      }
       switch (graphType) {
         case 'table':
           $timeout(function() {
-            $('.graphContainer .table tbody tr').on('click', function(evt) {
-              if ($scope.query.isRunning) {
-                return;
-              }
-              $scope.query.isRunning = true;
-              var gbIndex = $scope.paragraph.text.indexOf('group by');
-              var gbLen = 'group by '.length;
-              var column = $scope.paragraph.text.substring(gbIndex + gbLen, $scope.paragraph.text.length);
-              var val = evt.currentTarget.children[0].innerHTML;
-              $rootScope.$broadcast('updateQuery', {
-                column: column,
-                value: val
-              });
-            })
-          },200)
+            var _selector = '.graphContainer' + graphId + ' .table tbody tr';
+            $(_selector).on('click', function(evt) {
 
+              var val = evt.currentTarget.children[0].innerHTML;
+              _runQuery(val);
+
+            })
+          },200);
+          break;
+        case 'multiBarChart':
+          $timeout(function(){
+            var _selector =  graphId + ' svg g g rect';
+            $(_selector).on('click', function(evt) {
+
+              var val = $('.nvtooltip p').text().split('on')[1].trim();
+              _runQuery(val);
+
+            });
+
+          },200)
       }
     }
 
@@ -1098,7 +1123,7 @@ angular.module('zeppelinWebApp')
       // set table height
       var height = $scope.paragraph.config.graph.height;
       angular.element('#p' + $scope.paragraph.id + '_table').height(height);
-      registerGraphListener('table');
+      registerGraphListener('#p' + $scope.paragraph.id + '_graph');
     };
 
     var retryRenderer = function() {
@@ -1239,8 +1264,11 @@ angular.module('zeppelinWebApp')
       .transition()
       .duration(animationDuration)
       .call($scope.chart[type]);
+      //.each('end', completeHook);
       d3.select('#p'+$scope.paragraph.id+'_'+type+' svg').style.height = height+'px';
       nv.utils.windowResize($scope.chart[type].update);
+
+      registerGraphListener('#p'+$scope.paragraph.id+'_'+type);
     };
 
     var retryRenderer = function() {

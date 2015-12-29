@@ -18,6 +18,7 @@ angular.module('zeppelinWebApp')
   .controller('ParagraphCtrl', function($scope,$rootScope, $route, $window, $element, $routeParams, $location,
                                          $timeout, $compile, websocketMsgSrv) {
 
+  $rootScope.injectTo = {tableId: '20151228-190320_1286277824'};
   $scope.paragraph = null;
   $scope.originalText = '';
   $scope.editor = null;
@@ -147,13 +148,69 @@ angular.module('zeppelinWebApp')
     return 0;
   };
 
-    $scope.$on('updateQuery', function(evt, data) {
-      //TODO: apply from ui after we impl button func
-      if ($scope.paragraph.id === "20151228-190320_1286277824") {
-        $scope.paragraph.text += [' and ', data.column, ' = ', "'", data.value, "'"].join('');
-        $scope.runParagraph($scope.paragraph.text);
+  $scope.$on('updateQuery', function(evt, data) {
+    if ($scope.paragraph.id === $scope.injectTo.tableId) {
+      var part1,
+          part2,
+          endIndex;
+
+      var token         = data.column + ' = ' + "'" + data.value.trim() + "'";
+      var conditionIdx  = $scope.paragraph.text.indexOf(data.column + ' = ' + "'" + data.value.trim() + "'");
+
+      if (conditionIdx > -1) {
+        /**
+         * undo from query
+         * 3 cases:
+         * 1. only one condition
+         * 2. remove condition after an 'or'
+         * 3. remove the first condition within many
+         */
+        // first case
+        if ($scope.paragraph.text[conditionIdx-1] === '(' && $scope.paragraph.text[conditionIdx+token.length] === ')') {
+          endIndex = conditionIdx-6;
+
+          part1 = $scope.paragraph.text.substring(0, endIndex);
+          part2 = $scope.paragraph.text.substring(conditionIdx+token.length+1, $scope.paragraph.length);
+
+          $scope.paragraph.text = part1 + part2;
+        }
+        // second case
+        else if ($scope.paragraph.text[conditionIdx-3] + $scope.paragraph.text[conditionIdx-2] === 'or') {
+          endIndex = conditionIdx-4;
+
+          part1 = $scope.paragraph.text.substring(0, endIndex);
+          part2 = $scope.paragraph.text.substring(conditionIdx+token.length, $scope.paragraph.length);
+
+          $scope.paragraph.text = part1 + part2;
+        }
+        // third case
+        else if ($scope.paragraph.text[conditionIdx + token.length +1] + $scope.paragraph.text[conditionIdx + token.length +2] === 'or') {
+          endIndex = conditionIdx;
+          part1 = $scope.paragraph.text.substring(0, endIndex);
+          part2 = $scope.paragraph.text.substring(endIndex+token.length+4, $scope.paragraph.length);
+          $scope.paragraph.text = part1 + part2;
+        }
+
+      } else {
+        // append with 'or'
+        if($scope.paragraph.text.indexOf(data.column + ' = ') > -1) {
+          // we want to insert this or statemnt inside the 'and' clause of this column
+          var andClauseStartIndex = $scope.paragraph.text.indexOf(data.column + ' = ');
+          var injectIndex         = $scope.paragraph.text.indexOf('\')', andClauseStartIndex)+1;
+
+          var part1 = $scope.paragraph.text.substring(0,injectIndex);
+          var part2 = $scope.paragraph.text.substring(injectIndex, $scope.paragraph.text.length);
+
+          $scope.paragraph.text = part1 + [' or ', data.column, ' = ', "'", data.value.trim(), "'"].join('') + part2;
+        }
+        // append with 'and'
+        else {
+          $scope.paragraph.text += [' and (', data.column, ' = ', "'", data.value.trim(), "')"].join('');
+        }
       }
-    });
+      $scope.runParagraph($scope.paragraph.text);
+    }
+  });
 
   $scope.$watch($scope.getIframeDimensions, function (newValue, oldValue) {
     if ($scope.asIframe && newValue) {
@@ -905,9 +962,13 @@ angular.module('zeppelinWebApp')
     return 'data:image/png;base64,'+base64Data;
   };
 
-  $scope.isIsInjectMode = function(id) {
-    return $rootScope.injectedTableId === id;
-  }
+  $scope.isInjectMode = function(id) {
+    return $scope.injectTo.tableId === id;
+  };
+
+    $scope.setInjectTo = function(pId) {
+      $scope.injectTo.tableId = pId;
+    }
 
   $scope.getGraphMode = function(paragraph) {
     var pdata = (paragraph) ? paragraph : $scope.paragraph;
@@ -994,6 +1055,7 @@ angular.module('zeppelinWebApp')
         }
         $scope.query.isRunning = true;
         var gbIndex = $scope.paragraph.text.indexOf('group by');
+        if (gbIndex === -1) { return; }
         var gbLen = 'group by '.length;
         var column = $scope.paragraph.text.substring(gbIndex + gbLen, $scope.paragraph.text.length);
         $rootScope.$broadcast('updateQuery', {

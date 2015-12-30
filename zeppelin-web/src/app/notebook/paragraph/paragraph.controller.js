@@ -18,7 +18,8 @@ angular.module('zeppelinWebApp')
   .controller('ParagraphCtrl', function($scope,$rootScope, $route, $window, $element, $routeParams, $location,
                                          $timeout, $compile, websocketMsgSrv) {
 
-  $rootScope.injectTo = {tableId: '20151228-190320_1286277824'};
+  $rootScope.injectTo   = {tableId: '20151228-190320_1286277824'};
+  $scope.splittedQuery  = {whereCondition: ''};
   $scope.paragraph = null;
   $scope.originalText = '';
   $scope.editor = null;
@@ -56,6 +57,9 @@ angular.module('zeppelinWebApp')
     } else if ($scope.getResultType() === 'ANGULAR') {
       $scope.renderAngular();
     }
+
+    fetchWhereCondition($scope.paragraph.text);
+    //registerQueryListener()
   };
 
   $scope.renderHtml = function() {
@@ -211,6 +215,31 @@ angular.module('zeppelinWebApp')
       $scope.runParagraph($scope.paragraph.text);
     }
   });
+
+  $scope.whereConditionAdapter = function(whereCondition) {
+    var idx = $scope.paragraph.text.indexOf('where 1=1');
+    $scope.paragraph.text = $scope.paragraph.text.substring(0, idx) + whereCondition;
+    return $scope.paragraph.text;
+  };
+
+  //function registerQueryListener() {
+  //  $scope.$watch($scope.paragraph.text, function(newVal, oldVal) {
+  //    if (newVal !== oldVal) {
+  //      fetchWhereCondition(newVal);
+  //    }
+  //  });
+  //}
+
+  function fetchWhereCondition(query) {
+    if (query) {
+      var token = 'where 1=1';
+      if (query.indexOf(token) > -1) {
+        $scope.splittedQuery.whereCondition = query.substring(query.indexOf(token), query.length);
+      } else {
+        $scope.splittedQuery.whereCondition = null;
+      }
+    }
+  }
 
   $scope.$watch($scope.getIframeDimensions, function (newValue, oldValue) {
     if ($scope.asIframe && newValue) {

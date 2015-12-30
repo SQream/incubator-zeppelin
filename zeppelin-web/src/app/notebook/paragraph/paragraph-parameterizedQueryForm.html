@@ -14,6 +14,16 @@ limitations under the License.
 <form id="{{paragraph.id}}_form" role="form"
       ng-show="!paragraph.config.tableHide"
       class=" paragraphForm form-horizontal row">
+  <div class="form-group col-sm-6 col-md-6 col-lg-12" ng-show="!!splittedQuery.whereCondition">
+    <label class="control-label input-sm" ng-class="{'disable': paragraph.status == 'RUNNING' || paragraph.status == 'PENDING' }">Where Condition</label>
+    <div>
+      <input class="form-control input-sm"
+             ng-enter="runParagraph(whereConditionAdapter(splittedQuery.whereCondition))"
+             ng-model="splittedQuery.whereCondition"
+             ng-class="{'disable': paragraph.status == 'RUNNING' || paragraph.status == 'PENDING' }"
+             name="whereCondition" />
+    </div>
+  </div>
   <div class="form-group col-sm-6 col-md-6 col-lg-4"
        ng-repeat="formulaire in paragraph.settings.forms"
        ng-Init="loadForm(formulaire, paragraph.settings.params)">

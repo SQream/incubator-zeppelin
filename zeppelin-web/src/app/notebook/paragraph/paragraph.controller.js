@@ -59,7 +59,6 @@ angular.module('zeppelinWebApp')
     }
 
     fetchWhereCondition($scope.paragraph.text);
-    //registerQueryListener()
   };
 
   $scope.renderHtml = function() {
@@ -213,22 +212,23 @@ angular.module('zeppelinWebApp')
         }
       }
       $scope.runParagraph($scope.paragraph.text);
+    } else {
+      $scope.query.isRunning = false;
     }
   });
 
   $scope.whereConditionAdapter = function(whereCondition) {
-    var idx = $scope.paragraph.text.indexOf('where 1=1');
-    $scope.paragraph.text = $scope.paragraph.text.substring(0, idx) + whereCondition;
-    return $scope.paragraph.text;
+    var idx   = $scope.paragraph.text.indexOf('where 1=1');
+    return $scope.paragraph.text.substring(0, idx) + whereCondition;
   };
 
-  //function registerQueryListener() {
-  //  $scope.$watch($scope.paragraph.text, function(newVal, oldVal) {
-  //    if (newVal !== oldVal) {
-  //      fetchWhereCondition(newVal);
-  //    }
-  //  });
-  //}
+  function registerQueryListener() {
+    $scope.$watch($scope.paragraph.text, function(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        fetchWhereCondition(newVal);
+      }
+    });
+  }
 
   function fetchWhereCondition(query) {
     if (query) {
